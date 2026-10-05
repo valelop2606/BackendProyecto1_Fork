@@ -102,6 +102,12 @@ export class EnrollmentsService {
       await session.withTransaction(async () => {
         enrollment.status = EnrollmentStatus.Cancelled;
         await enrollment.save({ session });
+        // Libera el cupo que ocupaba la matricula
+        await this.groupModel.updateOne(
+          { _id: enrollment.group, enrolled: { $gt: 0 } },
+          { $inc: { enrolled: -1 } },
+          { session },
+        );
         await this.notificationsService.notify(
           student.user,
           NotificationType.EnrollmentCancelled,
