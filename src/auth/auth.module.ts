@@ -9,7 +9,6 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { JwtStrategy } from './strategies/jwt.strategy';
-import type { StringValue } from 'ms';
 
 @Module({
   imports: [
@@ -18,12 +17,14 @@ import type { StringValue } from 'ms';
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        secret: config.getOrThrow<string>('JWT_SECRET'),
-        signOptions: { expiresIn: String(config.getOrThrow<number>('JWT_EXPIRES_IN_SECONDS')) as StringValue },
-
-
-      }),
+      useFactory: (config: ConfigService) => {
+        const seconds = config.getOrThrow<number>('JWT_EXPIRES_IN_SECONDS');
+        return {
+          secret: config.getOrThrow<string>('JWT_SECRET'),
+          // Segundos numericos: la expiracion coincide con lo configurado
+          signOptions: { expiresIn: seconds },
+        };
+      },
     }),
   ],
   controllers: [AuthController],

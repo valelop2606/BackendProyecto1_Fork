@@ -40,8 +40,8 @@ export class UsersService implements OnModuleInit {
   async create(dto: CreateUserDto): Promise<UserDocument> {
     const passwordHash = await bcrypt.hash(dto.password, SALT_ROUNDS);
     return this.userModel.create({
-      name: dto.name,
-      email: dto.email,
+      name: dto.name.trim(),
+      email: dto.email.toLowerCase().trim(),
       role: dto.role ?? Role.Estudiante,
       passwordHash,
     });
@@ -130,9 +130,8 @@ export class UsersService implements OnModuleInit {
     if (await bcrypt.compare(newPassword, user.passwordHash)) {
       throw new BadRequestException('La nueva contrasena debe ser distinta de la actual');
     }
-    user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
-    user.passwordChangedAt = new Date();
-    return user;
+    // Persiste antes de retornar: sin save la rotacion quedaba solo en memoria
+    return this.setPassword(user, newPassword);
   }
 
   async resetPassword(id: string, newPassword: string): Promise<void> {
