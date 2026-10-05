@@ -1,5 +1,6 @@
 import { Body, Controller, Get, HttpCode, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { AuthUser, CurrentUser } from './decorators/current-user.decorator';
 import { Public } from './decorators/public.decorator';
@@ -13,6 +14,7 @@ export class AuthController {
 
   @ApiOperation({ summary: 'Iniciar sesion: devuelve el token JWT' })
   @Public()
+  @Throttle({ login: { limit: 10, ttl: 60000 } })
   @Post('login')
   @HttpCode(200)
   login(@Body() dto: LoginDto): Promise<{ accessToken: string }> {

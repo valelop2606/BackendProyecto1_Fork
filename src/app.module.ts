@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AcademicModule } from './academic/academic.module';
 import { AuthModule } from './auth/auth.module';
 import { validateEnv } from './config/env.validation';
@@ -31,6 +32,11 @@ import { UsersModule } from './users/users.module';
         uri: configService.get<string>('MONGODB_URI'),
       }),
     }),
+    // Tasa global + ventana estricta para el login (el abuso se deniega con 429)
+    ThrottlerModule.forRoot([
+      { ttl: 60000, limit: 100 },
+      { name: 'login', ttl: 60000, limit: 10 },
+    ]),
     HealthModule,
     UsersModule,
     AuthModule,

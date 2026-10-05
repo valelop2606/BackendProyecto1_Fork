@@ -19,8 +19,17 @@ const IN_DIR = path.join(__dirname, '..', 'database');
     const name = path.basename(file, '.json');
     const docs = EJSON.parse(fs.readFileSync(path.join(IN_DIR, file), 'utf8'));
     await db.collection(name).deleteMany({});
-    if (docs.length > 0) await db.collection(name).insertMany(docs);
-    console.log(name.padEnd(12), docs.length, 'documentos importados');
+    // Insercion no ordenada: un duplicado se reporta y se omite sin abortar la siembra
+    if (docs.length > 0) {
+      try {
+        await db.collection(name).insertMany(docs, { ordered: false });
+      } catch (e) {
+        const skipped = e.writeErrors?.length ?? 0;
+        console.error(name.padEnd(12), 'duplicados omitidos:', skipped, '-', e.message);
+      }
+    }
+    const total = await db.collection(name).countDocuments();
+    console.log(name.padEnd(12), total, 'documentos importados');
   }
   await client.close();
   console.log('Importacion terminada en la base:', db.databaseName);

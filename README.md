@@ -11,6 +11,8 @@ API (NestJS + MongoDB) de gestión académica universitaria. El frontend vive en
 
 ```
 cp .env.example .env   # variables de entorno
+# Genera el secreto de firma (minimo 16 caracteres) y pegalo en JWT_SECRET
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 npm install
 npm run db:up          # levanta MongoDB con Docker
 npm run db:import      # carga los datos de prueba (database/*.json)
