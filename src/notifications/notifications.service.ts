@@ -1,6 +1,6 @@
 import { ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { FilterQuery, Model } from 'mongoose';
+import { FilterQuery, Model, ClientSession } from 'mongoose';
 import { Paginated, paginate } from '../common/dto/pagination-query.dto';
 import { UsersService } from '../users/users.service';
 import { CreateNotificationDto, NotificationsQueryDto } from './dto/notification.dto';
@@ -30,15 +30,21 @@ export class NotificationsService {
     title: string,
     message: string,
     related?: { model: string; id: unknown },
+    opts?: { session?: ClientSession },
   ): Promise<void> {
     try {
-      await this.model.create({
-        user: this.idOf(user),
-        type,
-        title,
-        message,
-        ...(related ? { relatedModel: related.model, relatedId: this.idOf(related.id) } : {}),
-      });
+      await this.model.create(
+        [
+          {
+            user: this.idOf(user),
+            type,
+            title,
+            message,
+            ...(related ? { relatedModel: related.model, relatedId: this.idOf(related.id) } : {}),
+          },
+        ],
+        opts?.session ? { session: opts.session } : {},
+      );
     } catch (error) {
       this.logger.warn(`No se pudo crear la notificacion '${type}': ${error instanceof Error ? error.message : String(error)}`);
     }

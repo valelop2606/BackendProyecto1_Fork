@@ -13,6 +13,9 @@ import { StudentsModule } from '../students/students.module';
 import { TeachersModule } from '../teachers/teachers.module';
 import { AcademicController } from './academic.controller';
 import { AcademicService } from './academic.service';
+import { GroupGradesService } from './group-grades.service';
+import { ProgressService } from './progress.service';
+import { ScheduleService } from './schedule.service';
 
 @Module({
   imports: [
@@ -31,6 +34,6 @@ import { AcademicService } from './academic.service';
     PeriodsModule,
   ],
   controllers: [AcademicController],
-  providers: [AcademicService],
+  providers: [AcademicService, GroupGradesService, ScheduleService, ProgressService],
 })
 export class AcademicModule {}

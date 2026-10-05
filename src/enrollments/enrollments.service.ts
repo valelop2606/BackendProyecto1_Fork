@@ -76,7 +76,7 @@ export class EnrollmentsService {
       { model: 'Enrollment', id: created._id },
     );
     // Verifica que la matricula haya quedado confirmada
-    if (created.status === EnrollmentStatus.Active) {
+    if (created.status !== EnrollmentStatus.Active) {
       throw new BadRequestException('No se pudo confirmar la matricula');
     }
     return created;
@@ -93,26 +93,28 @@ export class EnrollmentsService {
     }
 
     const session = await this.connection.startSession();
+    // Lecturas fuera de la transaccion; dentro solo van los escritos (cancelacion + aviso)
+    const [student, subject] = await Promise.all([
+      this.studentsService.findOne(String(enrollment.student)),
+      this.subjectsService.findOne(String(enrollment.subject)),
+    ]);
     try {
       await session.withTransaction(async () => {
         enrollment.status = EnrollmentStatus.Cancelled;
         await enrollment.save({ session });
+        await this.notificationsService.notify(
+          student.user,
+          NotificationType.EnrollmentCancelled,
+          'Matricula cancelada',
+          `Se cancelo tu matricula en ${subject.name}.`,
+          { model: 'Enrollment', id: enrollment._id },
+          { session },
+        );
       });
     } finally {
       await session.endSession();
     }
 
-    const [student, subject] = await Promise.all([
-      this.studentsService.findOne(String(enrollment.student)),
-      this.subjectsService.findOne(String(enrollment.subject)),
-    ]);
-    await this.notificationsService.notify(
-      student.user,
-      NotificationType.EnrollmentCancelled,
-      'Matricula cancelada',
-      `Se cancelo tu matricula en ${subject.name}.`,
-      { model: 'Enrollment', id: enrollment._id },
-    );
     return this.findOne(id, user);
   }
 

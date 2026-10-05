@@ -35,7 +35,8 @@ export class ReportsService {
 
   // Resumen general: conteos de todo el sistema y fotografia del periodo abierto
   async dashboard() {
-    const [users, students, teachers, programs, subjects, faculties, classrooms, groups] = await Promise.all([
+    // allSettled: un conteo caido degrada su casilla en lugar de tumbar el tablero
+    const settled = await Promise.allSettled([
       this.userModel.aggregate([{ $group: { _id: '$role', total: { $sum: 1 } } }]),
       this.studentModel.countDocuments({ active: true }),
       this.teacherModel.countDocuments({ active: true }),
@@ -45,6 +46,21 @@ export class ReportsService {
       this.classroomModel.countDocuments({ active: true }),
       this.groupModel.countDocuments({ active: true }),
     ]);
+    const valueOf = <T>(r: PromiseSettledResult<T>, fallback: T): T =>
+      r.status === 'fulfilled' ? r.value : fallback;
+    const warnings = settled
+      .map((r, i) => (r.status === 'rejected' ? `conteo ${i} no disponible` : null))
+      .filter((w): w is string => w !== null);
+    const [users, students, teachers, programs, subjects, faculties, classrooms, groups] = [
+      valueOf(settled[0], [] as { _id: string; total: number }[]),
+      valueOf(settled[1], 0),
+      valueOf(settled[2], 0),
+      valueOf(settled[3], 0),
+      valueOf(settled[4], 0),
+      valueOf(settled[5], 0),
+      valueOf(settled[6], 0),
+      valueOf(settled[7], 0),
+    ];
 
     let period: unknown = null;
     try {
@@ -78,6 +94,7 @@ export class ReportsService {
       active: { students, teachers, programs, subjects, classrooms, groups },
       faculties,
       currentPeriod: period,
+      warnings,
     };
   }
 
