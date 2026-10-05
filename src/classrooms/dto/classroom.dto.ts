@@ -58,7 +58,12 @@ export class ClassroomsQueryDto extends PaginationQueryDto {
 
   @ApiPropertyOptional({ description: 'Capacidad minima' })
   @IsOptional()
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => {
+    // Solo lo convertible pasa como numero; el resto lo rechaza IsInt con mensaje
+    if (value === undefined || value === null || value === '') return undefined;
+    const parsed = Number(value);
+    return Number.isInteger(parsed) ? parsed : value;
+  })
   @IsInt()
   @Min(1)
   minCapacity?: number;

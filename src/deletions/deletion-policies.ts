@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { ConflictException, NotFoundException } from '@nestjs/common';
 import { Model } from 'mongoose';
 import { AuthUser } from '../auth/decorators/current-user.decorator';
 import { ClassroomDocument } from '../classrooms/schemas/classroom.schema';
@@ -110,7 +110,8 @@ export function buildDeletionPolicies(deps: DeletionDeps): Map<string, DeletionP
       kind: 'notifications',
       async execute(id: string, ctx?: DeletionContext): Promise<Deleted> {
         const notification = await mustExist<NotificationDocument>(deps.notificationModel, id, 'Notificacion');
-        if (String(notification.user) !== ctx?.userId) throw new ForbiddenException('Esta notificacion no es tuya');
+        // 404 generico para ajenos: no revela si el aviso existe (anti-sondeo)
+        if (String(notification.user) !== ctx?.userId) throw new NotFoundException('Notificacion no encontrada');
         await deps.notificationModel.deleteOne({ _id: id });
         return done('notifications', id);
       },

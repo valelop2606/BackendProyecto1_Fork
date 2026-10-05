@@ -34,7 +34,8 @@ export class UsersService implements OnModuleInit {
     const email = this.config.getOrThrow<string>('ADMIN_EMAIL');
     const password = this.config.getOrThrow<string>('ADMIN_PASSWORD');
     await this.create({ name: 'Administrador', email, password, role: Role.Admin });
-    this.logger.log(`Administrador inicial creado: ${email}`);
+    // Sin PII en el log: el evento se audita, el identificador queda solo en base
+    this.logger.log('Administrador inicial creado');
   }
 
   async create(dto: CreateUserDto): Promise<UserDocument> {

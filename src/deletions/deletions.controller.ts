@@ -7,7 +7,7 @@ import { ParseObjectIdPipe } from '../common/pipes/parse-object-id.pipe';
 import { DeletionsService, Deleted } from './deletions.service';
 
 // Eliminacion segura: se rechaza (409) si otros registros dependen del que se quiere borrar
-@ApiTags('deletions21312')
+@ApiTags('deletions')
 @ApiBearerAuth()
 @Controller()
 export class DeletionsController {
@@ -35,6 +35,7 @@ export class DeletionsController {
   }
 
   @ApiOperation({ summary: 'Elimina una de mis notificaciones' })
+  @Roles(Role.Admin, Role.Docente, Role.Estudiante)
   @Delete('notifications/:id')
   notification(@Param('id', ParseObjectIdPipe) id: string, @CurrentUser() user: AuthUser): Promise<Deleted> {
     return this.deletionsService.removeNotification(id, user.id);
