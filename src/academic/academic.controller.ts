@@ -69,6 +69,7 @@ export class AcademicController {
   }
 
   @ApiOperation({ summary: 'Malla curricular de un programa: materias por semestre con prerrequisitos' })
+  @Roles(Role.Admin, Role.Docente, Role.Estudiante)
   @Get('programs/:id/curriculum')
   curriculum(@Param('id', ParseObjectIdPipe) id: string) {
     return this.academicService.curriculum(id);
